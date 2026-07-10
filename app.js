@@ -457,8 +457,10 @@ async function submitForm() {
     window.keywords.push(...extracted);
   }
 
-  const submission = { ...pageState.formData, submittedAt: new Date().toISOString() };
-  window.submissions.push(submission);
+  const submission = { 
+  ...pageState.formData, 
+  submittedAt: new Date().toLocaleString("sv-SE") // "YYYY-MM-DD HH:mm:ss" style
+  };
 
   // Reset UI immediately
   alert('Thank you for your submission!');
