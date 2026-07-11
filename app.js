@@ -146,7 +146,7 @@ window.keywords = [];
 
 const N8N_CONFIG = {
   baseUrl: 'https://n8ngc.codeblazar.org',
-  webhookPath: 'webhook-test/fa1-screening-form',
+  webhookPath: 'webhook/fa1-screening-form',
   getPath: ''
 };
 
