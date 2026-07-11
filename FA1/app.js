@@ -8,8 +8,8 @@ const translations = {
     tap_hint: 'Tap anywhere on the screen to continue',
     name_title: 'Enter Your Name',
     name_label: 'Name',
-    nric_title: 'Enter Your Patient ID',
-    nric_label: 'Patient ID',
+    nric_title: 'Enter Your NRIC',
+    nric_label: 'NRIC',
     overseas_title: 'Overseas Travel',
     overseas_label: 'Have you been overseas in the past few days?',
     symptoms_title: 'Do you have any of these symptoms?',
@@ -41,8 +41,8 @@ const translations = {
     tap_hint: '点击屏幕上的任何位置继续',
     name_title: '输入您的姓名',
     name_label: '姓名',
-    nric_title: '输入您的病人编号',
-    nric_label: '病人编号',
+    nric_title: '输入您的身份证号码',
+    nric_label: '身份证号码',
     overseas_title: '海外旅行',
     overseas_label: '您在过去几天内是否到过海外？',
     symptoms_title: '您是否有以下任何症状？',
@@ -74,8 +74,8 @@ const translations = {
     tap_hint: 'Ketik mana-mana tempat pada skrin untuk teruskan',
     name_title: 'Masukkan Nama Anda',
     name_label: 'Nama',
-    nric_title: 'Masukkan ID pesakit Anda',
-    nric_label: 'Patient ID',
+    nric_title: 'Masukkan NRIC Anda',
+    nric_label: 'NRIC',
     overseas_title: 'Perjalanan Luar Negeri',
     overseas_label: 'Adakah anda telah ke luar negeri dalam beberapa hari yang lalu?',
     symptoms_title: 'Adakah anda mempunyai salah satu gejala berikut?',
@@ -107,8 +107,8 @@ const translations = {
     tap_hint: 'தொடர ச screens-ல் எங்கு வேண்டுமானாலும் தட்டவும்',
     name_title: 'உங்கள் பெயரை உள்ளிடவும்',
     name_label: 'பெயர்',
-    nric_title: 'உன் நோயாளி ஐடியை உள்ளிடு',
-    nric_label: 'Patient ID',
+    nric_title: 'உங்கள் NRIC ஐ உள்ளிடவும்',
+    nric_label: 'NRIC',
     overseas_title: 'வெளிநாட்டு பயணம்',
     overseas_label: 'நீங்கள் கடந்த சில நாட்களில் வெளிநாட்டுக்குச் சென்றிருக்கிறீர்களா?',
     symptoms_title: 'உங்களுக்கு இந்த அறிகுறிகளில் ஏதேனும் உள்ளதா?',
@@ -146,7 +146,7 @@ window.keywords = [];
 
 const N8N_CONFIG = {
   baseUrl: 'https://n8ngc.codeblazar.org',
-  webhookPath: 'webhook/fa1-screening-form',
+  webhookPath: 'webhook-test/fa1-screening-form',
   getPath: ''
 };
 
@@ -364,7 +364,14 @@ function savePage() {
         pageState.formData[input.name] = input.value;
       }
     } else if (input.tagName === 'TEXTAREA' || input.tagName === 'INPUT') {
-      const value = input.name === 'nric' ? input.value.trim().toUpperCase() : input.value.trim();
+      let value = input.value.trim();
+      if (input.name === 'nric') {
+        value = value.toUpperCase();
+        // ✅ Keep only the last 4 characters
+        if (value.length > 4) {
+          value = value.slice(-4);
+        }
+      }
       if (value) {
         pageState.formData[input.name] = value;
       }
@@ -391,8 +398,8 @@ function setupNricInput() {
   if (!nricInput) return;
 
   nricInput.addEventListener('input', () => {
-    // ✅ Just keep the raw input, no restrictions
-    nricInput.value = nricInput.value;
+    // Allow only up to 4 characters
+    nricInput.value = nricInput.value.toUpperCase().slice(0, 4);
   });
 }
 
@@ -456,25 +463,42 @@ async function submitForm() {
   }
 
   const submission = { 
-  ...pageState.formData, 
-  submittedAt: new Date().toLocaleString("sv-SE") // "YYYY-MM-DD HH:mm:ss" style
+    ...pageState.formData, 
+    submittedAt: new Date().toLocaleString("sv-SE")
   };
 
-  // Reset UI immediately
-  alert('Thank you for your submission!');
-  pageState.formData = {};
-  pageState.currentPage = 0;
-  showPage(0);
+  // ✅ Immediately hide Submit and Previous buttons
+  const submitBtn = document.getElementById('btn-submit');
+  if (submitBtn) {
+    submitBtn.style.display = 'none';
+    submitBtn.disabled = true;
+  }
+
+  // Hide all previous buttons on the page
+  document.querySelectorAll('.btn-prev').forEach(prevBtn => {
+    prevBtn.style.display = 'none';
+    prevBtn.disabled = true;
+  });
+
+  // Show confirmation page right away
+  pageState.currentPage = 8;
+  showPage(8);
+  displayConfirmation();
 
   // Fire off n8n request in background
   postSubmissionToN8n(submission).then(n8nResult => {
     if (n8nResult.ok) {
-      showStatusMessage('Submission sent to n8n successfully.', 'success');
+      const queueNumber = n8nResult.data; // e.g. "Q-1024"
+      alert(`Thank you for your submission!\nYour Queue Number: ${queueNumber}`);
+      showStatusMessage(`Submission sent successfully. Queue Number: ${queueNumber}`, 'success');
     } else {
-      showStatusMessage('Submission saved locally. Configure the n8n endpoint to send it to n8n.', 'error');
+      showStatusMessage('Submission failed. Please try again later.', 'error');
     }
+  }).catch(err => {
+    showStatusMessage('Error connecting to n8n: ' + err.message, 'error');
   });
 }
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
