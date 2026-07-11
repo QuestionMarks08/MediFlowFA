@@ -160,10 +160,8 @@ function setupLogoutButton() {
   logoutBtn.addEventListener('click', () => {
     const confirmLogout = confirm('Are you sure you want to logout?');
     if (confirmLogout) {
-      pageState.formData = {};
-      pageState.currentPage = 0;
-      showPage(0);
-      logoutBtn.style.display = 'none'; // hide again on welcome page
+      // Redirect to your desired link instead of resetting pageState
+      window.location.href = 'https://choppedtomato277.github.io/mediflow_login/';
     }
   });
 }
